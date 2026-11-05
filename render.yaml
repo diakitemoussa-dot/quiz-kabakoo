@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: quiz-kabakoo
+    runtime: node
+    plan: free
+    buildCommand: echo ok
+    startCommand: node server.js
+    envVars:
+      - key: HOST_PASSWORD
+        sync: false
