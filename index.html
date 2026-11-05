@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Purpose & Vision — Kabakoo</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--p:#55415D;--c:#F8F3EA;--y:#F9D58B;--l:#C3A5C7}
+*{box-sizing:border-box}body{margin:0;background:var(--c);color:var(--p);font-family:Lato,'Open Sans',sans-serif;min-height:100vh}
+h1,h2,h3,.r{font-family:Rubik,sans-serif}
+header{background:var(--p);color:var(--c);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+header b{font-family:Rubik,sans-serif;font-size:18px}.an{font-size:13px;color:var(--y);margin-top:2px}header>span{color:var(--y);font-size:14px;text-align:right}
+main{max-width:760px;margin:0 auto;padding:20px}
+.card{background:#fff;border-radius:20px;padding:22px;margin-bottom:16px;box-shadow:0 2px 10px rgba(85,65,93,.12)}
+button,input{font:inherit}input{width:100%;padding:14px;border-radius:14px;border:2px solid var(--l);background:var(--c);color:var(--p);font-size:17px;margin-bottom:6px}
+.btn{background:var(--p);color:var(--c);border:0;border-radius:14px;padding:14px 22px;font-family:Rubik,sans-serif;font-weight:700;font-size:16px;cursor:pointer;margin:0 6px 6px 0}.btn.y{background:var(--y);color:var(--p)}
+.sites{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.site{padding:14px 6px;border-radius:14px;border:2px solid var(--l);background:var(--c);color:var(--p);font-weight:700;cursor:pointer}.site.on{background:var(--y);border-color:var(--p)}
+.opts{display:grid;gap:12px;margin-top:16px}
+.opt{text-align:left;padding:16px;border-radius:16px;border:2px solid var(--l);background:var(--c);color:var(--p);font-size:17px;cursor:pointer;display:flex;gap:12px;align-items:center}
+.opt i{font-style:normal;background:var(--p);color:var(--c);border-radius:10px;min-width:34px;height:34px;display:grid;place-items:center;font-family:Rubik}
+.opt.sel{background:var(--l);border-color:var(--p)}.opt.ok{background:#cfe9c7;border-color:#4a8a3a}.opt.ko{background:#f3c9c9;border-color:#b04444}
+.bar{height:14px;background:var(--l);border-radius:10px;overflow:hidden;margin:6px 0 14px}.bar div{height:100%;background:var(--y);width:100%}
+.row{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:12px;background:var(--c);margin:6px 0}.row.me{background:var(--y)}
+.muted{opacity:.75;font-size:14px}.big{font-size:22px;font-weight:700}.host{border:2px dashed var(--l)}
+</style></head><body>
+<header><div><b>Purpose & Vision · Quiz</b><div class="an">Animé par Karamoko Niaré et Amadou Togo</div></div><span id="tag"></span></header>
+<main id="app"><div class="card">Connexion…</div></main>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+const ESP=["Lomé","Bamako","Ségou"],L="ABCD";
+const e=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let S=null,off=0,id,esp=null,nmv="",pass="",msg="",rs=false,picked=null,key="";
+const host=location.hash==="#animateur";
+try{id=localStorage.getItem("qid")}catch(x){}
+if(!id){id=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem("qid",id)}catch(x){}}
+const HOSTID="kabakoo-quiz-purpose-vision-host",PH="a9b5bc3c866addff57adba006ebcd581b7fa2c0b4a294e2e8d6a850e83a0bc1b",T=20;
+const sha=async s=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,"0")).join("");
+const tag=t=>{document.getElementById("tag").textContent=t};
+const wait=t=>{if(!S)document.getElementById("app").innerHTML='<div class="card">'+e(t)+'</div>'};
+function recv(d){S=JSON.parse(d);off=S.now-Date.now();const k=S.phase+S.i+S.t0;if(k!==key){key=k;picked=null}render()}
+/* ---- Moteur du quiz : tourne dans le navigateur de l'animateur ---- */
+let Q=[],st={phase:"lobby",i:0,t0:0},teams={};const conns=new Set();
+const score=t=>Object.values(t.answers).reduce((s,x)=>s+x.p,0);
+function view(){
+  const rv=st.phase==="reveal"||st.phase==="end",q=Q[st.i];
+  return JSON.stringify({now:Date.now(),T,n:Q.length,phase:st.phase,i:st.i,t0:st.t0,
+    q:(st.phase==="q"||rv)?{q:q.q,o:q.o}:null,correct:rv?q.a:null,
+    teams:Object.entries(teams).map(([id,t])=>({id,name:t.name,espace:t.espace,score:score(t),
+      done:!!t.answers[st.i],res:rv&&t.answers[st.i]?t.answers[st.i]:null}))});
+}
+function push(){const m=view();try{localStorage.setItem("qhost",JSON.stringify({st,teams}))}catch(x){}for(const c of conns)if(c.open)c.send(m);recv(m)}
+function reveal(){if(st.phase==="q"){st.phase="reveal";push()}}
+function begin(i){st={phase:"q",i,t0:Date.now()};const t0=st.t0;push();setTimeout(()=>{if(st.phase==="q"&&st.t0===t0)reveal()},T*1000+400)}
+async function hapi(p,b,local){
+  const clean=s=>String(s||"").trim().slice(0,30);
+  if(p==="join"){const name=clean(b.name);if(!b.id||!name||!ESP.includes(b.espace))return{err:"invalide"};
+    teams[b.id]=teams[b.id]||{answers:{}};Object.assign(teams[b.id],{name,espace:b.espace});push();return{ok:1}}
+  if(p==="answer"){const t=teams[b.id];if(!t||st.phase!=="q"||b.i!==st.i||t.answers[st.i])return{err:"refusé"};
+    const el=(Date.now()-st.t0)/1000;if(el>T+0.5)return{err:"trop tard"};
+    const ok=b.c===Q[st.i].a,pts=ok?Math.round(500+500*Math.max(0,1-el/T)):0;
+    t.answers[st.i]={c:b.c,p:pts};push();return{ok:1}}
+  if(p==="host"){if(!local||await sha(b.pass||"")!==PH)return{err:"pass"};
+    if(b.action==="start")begin(0);
+    else if(b.action==="reveal")reveal();
+    else if(b.action==="next"){if(st.i<Q.length-1)begin(st.i+1);else{st.phase="end";push()}}
+    else if(b.action==="reset"){for(const k in teams)delete teams[k];st={phase:"lobby",i:0,t0:0};push()}
+    return{ok:1}}
+  return{err:"404"};
+}
+const pend={};let peer,conn;
+const api=(p,b)=>host?hapi(p,{id,...b},true):new Promise(res=>{
+  if(!conn||!conn.open)return res({err:"réseau"});
+  const rid=Math.random().toString(36).slice(2);
+  pend[rid]=r=>{delete pend[rid];res(r)};conn.send({rid,p,b:{id,...b}});
+  setTimeout(()=>{if(pend[rid]){delete pend[rid];res({err:"réseau"})}},8000)});
+async function startHost(){
+  try{Q=await (await fetch("questions.json")).json()}catch(x){return wait("Impossible de charger les questions.")}
+  try{const sv=JSON.parse(localStorage.getItem("qhost"));if(sv&&sv.st){st=sv.st;teams=sv.teams||{}}}catch(x){}
+  peer=new Peer(HOSTID);
+  peer.on("open",()=>{push();if(st.phase==="q"){const t0=st.t0;setTimeout(()=>{if(st.phase==="q"&&st.t0===t0)reveal()},Math.max(0,T*1000+400-(Date.now()-t0)))}});
+  peer.on("connection",c=>{conns.add(c);
+    c.on("open",()=>c.send(view()));
+    c.on("data",async d=>{if(d&&d.rid)c.send({rid:d.rid,r:await hapi(d.p,d.b,false)})});
+    c.on("close",()=>conns.delete(c));c.on("error",()=>conns.delete(c))});
+  peer.on("disconnected",()=>peer.reconnect());
+  peer.on("error",er=>{if(er.type==="unavailable-id")wait("Un autre onglet animateur est déjà ouvert. Fermez-le puis rechargez cette page.");else tag("Connexion instable…")});
+}
+function dial(){
+  conn=peer.connect(HOSTID,{reliable:true});
+  conn.on("open",()=>tag(""));
+  conn.on("data",d=>{if(typeof d==="string")recv(d);else if(d&&pend[d.rid])pend[d.rid](d.r)});
+  conn.on("close",()=>{tag("Reconnexion…");setTimeout(dial,2000)});
+}
+function startGuest(){
+  wait("Connexion à l’animateur…");
+  peer=new Peer();
+  peer.on("open",dial);
+  peer.on("disconnected",()=>peer.reconnect());
+  peer.on("error",er=>{if(er.type==="peer-unavailable"){wait("En attente de l’animateur… la page se connectera toute seule.");tag("En attente…");setTimeout(dial,3000)}else{tag("Reconnexion…");setTimeout(()=>{if(peer.destroyed)startGuest();else if(!conn||!conn.open)dial()},3000)}});
+}
+host?startHost():startGuest();
+const me=()=>S.teams.find(t=>t.id===id);
+const rem=()=>Math.max(0,S.T-(Date.now()+off-S.t0)/1000);
+async function join(){if(!nmv.trim()||!esp){msg="Choisissez un nom et un espace.";return render()}msg="";await api("join",{name:nmv,espace:esp})}
+async function answer(c){const m=me();if(picked!==null||!m||m.done||rem()<=0)return;picked=c;render();const r=await api("answer",{i:S.i,c});if(r.err){picked=null;msg="Réponse refusée ("+r.err+")";render()}}
+async function act(a){const r=await api("host",{pass,action:a});msg=r.err==="pass"?"Mot de passe incorrect.":"";rs=false;render()}
+function board(){
+  const s=[...S.teams].sort((a,b)=>b.score-a.score);
+  const by=ESP.map(n=>{const g=S.teams.filter(t=>t.espace===n);return{n,k:g.length,m:g.length?Math.round(g.reduce((a,t)=>a+t.score,0)/g.length):0}}).sort((a,b)=>b.m-a.m);
+  return `<div class="card"><h3>Classement des groupes</h3>${s.slice(0,12).map((t,i)=>`<div class="row ${t.id===id?"me":""}"><span>${i+1}. ${e(t.name)} <span class="muted">· ${e(t.espace)}</span></span><b>${t.score}</b></div>`).join("")||'<p class="muted">Aucun groupe.</p>'}</div>
+  <div class="card"><h3>Classement des espaces <span class="muted">(moyenne par groupe)</span></h3>${by.map((x,i)=>`<div class="row"><span>${i+1}. ${x.n} <span class="muted">· ${x.k} groupe${x.k>1?"s":""}</span></span><b>${x.m}</b></div>`).join("")}</div>`;
+}
+function hostBar(){
+  if(!host)return"";
+  const b=(l,a,c="")=>`<button class="btn ${c}" onclick="${a}">${l}</button>`;
+  let h="";
+  if(S.phase==="lobby")h=b("Démarrer le quiz","act('start')","y");
+  if(S.phase==="q")h=b("Révéler la réponse","act('reveal')","y");
+  if(S.phase==="reveal")h=b(S.i<S.n-1?"Question suivante":"Voir le classement final","act('next')","y");
+  const n=S.teams.length,d=S.teams.filter(t=>t.done).length;
+  return `<div class="card host"><b class="r">Animateur</b> <span class="muted">· ${n} groupe(s)${S.phase==="q"?" · "+d+" réponse(s)":""}</span>
+  <input type="password" placeholder="Mot de passe animateur" value="${e(pass)}" oninput="pass=this.value" style="margin-top:10px">
+  <div>${h}${rs?b("Oui, tout effacer","act('reset')","y")+b("Annuler","rs=false;render()"):b("Réinitialiser","rs=true;render()")}</div></div>`;
+}
+function render(){
+  if(!S)return;
+  const m=me();document.getElementById("tag").textContent=m?`${m.name} · ${m.espace} · ${m.score} pts`:"";
+  let h=hostBar()+(msg?`<div class="card">${e(msg)}</div>`:"");
+  if(!m){
+    h+=`<div class="card"><h2>Bienvenue !</h2><p>Un seul appareil par groupe. Donnez un nom à votre groupe et choisissez votre espace.</p>
+    <input maxlength="30" placeholder="Nom du groupe" value="${e(nmv)}" oninput="nmv=this.value">
+    <div class="sites">${ESP.map(s=>`<button class="site ${esp===s?"on":""}" onclick="esp='${s}';render()">${s}</button>`).join("")}</div>
+    <button class="btn" onclick="join()">Rejoindre</button></div>`;
+    if(S.phase!=="lobby")h+='<div class="card muted">Le quiz est déjà en cours : vous pouvez rejoindre, vous jouerez dès la prochaine question.</div>';
+  }else if(S.phase==="lobby")h+=`<div class="card"><h2>Vous êtes prêts, ${e(m.name)} !</h2><p>Le quiz commence dès que l’animateur le lance. ${S.n} questions · ${S.T} secondes chacune · plus vous répondez vite, plus vous gagnez de points (jusqu’à 1000).</p></div>`+board();
+  else if(S.phase==="q"||S.phase==="reveal"){
+    const rv=S.phase==="reveal",r=m.res,ch=picked!==null?picked:null;
+    h+=`<div class="card"><div class="muted">Question ${S.i+1} / ${S.n}</div>${rv?"":`<div class="bar"><div id="bf"></div></div>`}<h2 style="margin:8px 0">${e(S.q.q)}</h2><div class="opts">${S.q.o.map((o,i)=>{
+      let c="opt";if(rv)c+=i===S.correct?" ok":(r&&r.c===i?" ko":"");else if(ch===i)c+=" sel";
+      return `<button class="${c}" onclick="answer(${i})" ${rv||m.done||ch!==null?"disabled":""}><i>${L[i]}</i><span>${e(o)}</span></button>`}).join("")}</div>
+    ${rv?`<p class="big">${r&&r.p?"+"+r.p+" points":r?"Raté !":"Pas de réponse"}</p>`:(m.done||ch!==null)?'<p class="muted">Réponse envoyée. En attente de la révélation…</p>':""}</div>`;
+    if(rv)h+=board();
+  }else h+=`<div class="card"><h2>Merci à tous !</h2><p>Score de votre groupe : <b>${m.score}</b> points.</p></div>`+board();
+  document.getElementById("app").innerHTML=h;
+  const f=document.getElementById("bf");if(f)f.style.width=(rem()/S.T*100)+"%";
+}
+setInterval(()=>{if(S&&S.phase==="q"){const f=document.getElementById("bf");if(f)f.style.width=(rem()/S.T*100)+"%"}},250);
+</script></body></html>
