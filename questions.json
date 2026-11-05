@@ -1,0 +1,131 @@
+[
+ {
+  "q": "Sur 1 000 apprenants contactés par WhatsApp, combien ont ouvert le message ?",
+  "o": [
+   "640",
+   "830",
+   "700",
+   "540"
+  ],
+  "a": 1
+ },
+ {
+  "q": "64 % des 830 qui ont ouvert ont répondu ou cliqué. Soit environ combien sur les 1 000 contacts ?",
+  "o": [
+   "640",
+   "540",
+   "531",
+   "640 + 830"
+  ],
+  "a": 2
+ },
+ {
+  "q": "Plus de 70 % des participations ont eu lieu après le passage de « Clubs » à « Grins ». Quelle conclusion est justifiée ?",
+  "o": [
+   "+40 % de fréquentation exactement",
+   "Le changement de nom a forcément causé la hausse",
+   "La majorité des participations a eu lieu après le changement",
+   "Tous les contactés ont participé"
+  ],
+  "a": 2
+ },
+ {
+  "q": "Principal problème méthodologique de l’expérience WhatsApp ?",
+  "o": [
+   "Message trop court",
+   "Apprenants parmi les plus actifs, sans test A/B formel",
+   "WhatsApp ne mesure pas les interactions",
+   "Expérience menée dans trois pays"
+  ],
+  "a": 1
+ },
+ {
+  "q": "Storytelling cluster : 100 % de vocabulaire culturel. Que signifie ce chiffre ?",
+  "o": [
+   "100 % des 35 125 apprenants maîtrisent le storytelling",
+   "Tous les portfolios contiennent du vocabulaire culturel",
+   "Le vocabulaire culturel est présent à 100 % dans ce cluster",
+   "100 % des apprenants ont créé une entreprise"
+  ],
+  "a": 2
+ },
+ {
+  "q": "Pourquoi « Grin » est-il plus intéressant qu’une simple traduction de « Club » ?",
+  "o": [
+   "Il est plus court",
+   "Il renvoie à une pratique sociale et à un sentiment d’appartenance connus",
+   "« Club » est interdit au Mali",
+   "Les apprenants ne comprennent pas l’anglais"
+  ],
+  "a": 1
+ },
+ {
+  "q": "Quel créateur a transformé un échec migratoire en métier artistique ?",
+  "o": [
+   "Kassim Barry",
+   "Ousmane Diallo",
+   "Abdoulaye Yampa"
+  ],
+  "a": 2
+ },
+ {
+  "q": "Samaou Touré vient de quelle localité de Gao ?",
+  "o": [
+   "Tilemsi",
+   "Gao",
+   "Soni Ali Ber / Barisadji",
+   "Gounzoureye"
+  ],
+  "a": 2
+ },
+ {
+  "q": "Miles Davis (Birth of the Cool) était de quelle nationalité ?",
+  "o": [
+   "Allemande",
+   "Sud-africaine",
+   "Américaine",
+   "Nigériane"
+  ],
+  "a": 2
+ },
+ {
+  "q": "Pourquoi Amadou Togo avait-il honte de porter des vêtements de sa culture ?",
+  "o": [
+   "Ils étaient inconfortables",
+   "Il craignait le jugement des autres",
+   "Il voulait un style exclusivement occidental",
+   "Il n’en avait pas"
+  ],
+  "a": 1
+ },
+ {
+  "q": "Je suis passé d’un format écrit à une vidéo narrative pour toucher plus de monde. Qui suis-je ?",
+  "o": [
+   "Le Highdigenous",
+   "Dôgôkun Sôrô",
+   "Le learning pod",
+   "Le portfolio"
+  ],
+  "a": 1
+ },
+ {
+  "q": "Hombori : plus de 622 000 vues. Abomey : plus de 200 000. Quelle affirmation est correcte ?",
+  "o": [
+   "Hombori a exactement 3,11 fois plus de vues",
+   "Cumul exact : 822 000 vues",
+   "Aucun rapport exact n’est calculable avec ces chiffres",
+   "Abomey a moins de 200 000 vues"
+  ],
+  "a": 2
+ },
+ {
+  "q": "Qu’est-ce qui définit le mieux l’approche Highdigenous de Kabakoo ?",
+  "o": [
+   "Moderniser les savoirs endogènes",
+   "Préserver les pratiques ancestrales",
+   "Fusionner technologie de pointe et savoirs endogènes",
+   "Numériser le patrimoine culturel"
+  ],
+  "a": 2
+ }
+]
