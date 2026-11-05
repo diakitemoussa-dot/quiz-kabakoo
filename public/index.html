@@ -33,9 +33,14 @@ const host=location.hash==="#animateur";addEventListener("hashchange",()=>locati
 try{id=localStorage.getItem("qid")}catch(x){}
 if(!id){id=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem("qid",id)}catch(x){}}
 const api=(p,b)=>fetch("/api/"+p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,...b})}).then(r=>r.json()).catch(()=>({err:"réseau"}));
-const es=new EventSource("/events");
-es.onmessage=m=>{S=JSON.parse(m.data);off=S.now-Date.now();const k=S.phase+S.i+S.t0;if(k!==key){key=k;picked=null}render()};
-es.onerror=()=>{document.getElementById("tag").textContent="Reconnexion…"};
+const tag=t=>{document.getElementById("tag").textContent=t};
+let es,got=false;
+try{if(host)pass=sessionStorage.getItem("qp")||""}catch(x){}
+function openES(){if(es)es.close();got=false;es=new EventSource("/events"+(host?"?pass="+encodeURIComponent(pass):""));
+  es.onmessage=m=>{got=true;if(host)try{sessionStorage.setItem("qp",pass)}catch(x){}S=JSON.parse(m.data);off=S.now-Date.now();const k=S.phase+S.i+S.t0;if(k!==key){key=k;picked=null}render()};
+  es.onerror=()=>{if(host&&!got){es.close();try{sessionStorage.removeItem("qp")}catch(x){}msg=pass?"Mot de passe incorrect.":"";gate()}else tag("Reconnexion…")}}
+function gate(){document.getElementById("app").innerHTML=`<div class="card host"><h2>Espace animateur</h2><p class="muted">Entrez le mot de passe pour piloter le quiz.</p>${msg?`<p><b>${e(msg)}</b></p>`:""}<input type="password" id="pw" placeholder="Mot de passe animateur" value="${e(pass)}" onkeydown="if(event.key==='Enter')login()"><button class="btn y" onclick="login()">Entrer</button></div>`}
+function login(){pass=document.getElementById("pw").value;msg="";openES()}
 const me=()=>S.teams.find(t=>t.id===id);
 const rem=()=>Math.max(0,S.T-(Date.now()+off-S.t0)/1000);
 async function join(){if(!nmv.trim()||!esp){msg="Choisissez un nom et un espace.";return render()}msg="";await api("join",{name:nmv,espace:esp})}
@@ -59,8 +64,30 @@ function hostBar(){
   <input type="password" placeholder="Mot de passe animateur" value="${e(pass)}" oninput="pass=this.value" style="margin-top:10px">
   <div>${h}${rs?b("Oui, tout effacer","act('reset')","y")+b("Annuler","rs=false;render()"):b("Réinitialiser","rs=true;render()")}</div></div>`;
 }
+function dash(){
+  tag("Animateur");
+  const t=S.teams,n=t.length,d=t.filter(x=>x.done).length,rv=S.phase==="reveal"||S.phase==="end";
+  const b=(l,a,c="")=>`<button class="btn ${c}" onclick="${a}">${l}</button>`;
+  let hb="";
+  if(S.phase==="lobby")hb=b("Démarrer le quiz","act('start')","y");
+  if(S.phase==="q")hb=b("Révéler la réponse","act('reveal')","y");
+  if(S.phase==="reveal")hb=b(S.i<S.n-1?"Question suivante":"Voir le classement final","act('next')","y");
+  const per=ESP.map(x=>x+" : "+t.filter(y=>y.espace===x).length).join(" · ");
+  let o=`<div class="card host"><b class="r">Animateur</b> · <span class="big">${n}</span> groupe(s) inscrit(s) · ${S.online} appareil(s) connecté(s)<div class="muted">${per}</div><div style="margin-top:10px">${hb}${rs?b("Oui, tout effacer","act('reset')","y")+b("Annuler","rs=false;render()"):b("Réinitialiser","rs=true;render()")}</div>${msg?`<p>${e(msg)}</p>`:""}</div>`;
+  if(S.q){
+    const cnt=S.q.o.map((_,i)=>t.filter(x=>x.c===i).length);
+    o+=`<div class="card"><div class="muted">Question ${S.i+1} / ${S.n} · ${d}/${n} réponse(s)</div>${S.phase==="q"?`<div class="bar"><div id="bf"></div></div>`:""}<h2 style="margin:8px 0">${e(S.q.q)}</h2>${S.q.o.map((x,i)=>`<div class="row ${i===S.correct?"me":""}"><span><b>${L[i]}.</b> ${e(x)}${i===S.correct?" ✓ bonne réponse":""}</span><b>${cnt[i]}</b></div>`).join("")}</div>`;
+  }
+  const s=[...t].sort((a,b)=>b.score-a.score);
+  o+=`<div class="card"><h3>Groupes et scores</h3>${s.map((x,i)=>{const has=x.c!==null&&x.c!==undefined,ch=has?L[x.c]:(S.phase==="q"?"…":"–"),mk=rv&&has?(x.c===S.correct?" ✓":" ✗"):"";return `<div class="row"><span>${i+1}. ${e(x.name)} <span class="muted">· ${e(x.espace)}${S.q?" · réponse "+ch+mk:""}${x.p?" · +"+x.p:""}</span></span><b>${x.score}</b></div>`}).join("")||'<p class="muted">Aucun groupe pour l’instant.</p>'}</div>`;
+  const by=ESP.map(nm=>{const g=t.filter(x=>x.espace===nm);return{nm,k:g.length,m:g.length?Math.round(g.reduce((a,x)=>a+x.score,0)/g.length):0}}).sort((a,b)=>b.m-a.m);
+  o+=`<div class="card"><h3>Classement des espaces <span class="muted">(moyenne par groupe)</span></h3>${by.map((x,i)=>`<div class="row"><span>${i+1}. ${x.nm} <span class="muted">· ${x.k} groupe${x.k>1?"s":""}</span></span><b>${x.m}</b></div>`).join("")}</div>`;
+  document.getElementById("app").innerHTML=o;
+  const f=document.getElementById("bf");if(f)f.style.width=(rem()/S.T*100)+"%";
+}
 function render(){
   if(!S)return;
+  if(host){dash();return}
   const m=me();document.getElementById("tag").textContent=m?`${m.name} · ${m.espace} · ${m.score} pts`:"";
   let h=hostBar()+(msg?`<div class="card">${e(msg)}</div>`:"");
   if(!m){
@@ -82,4 +109,5 @@ function render(){
   const f=document.getElementById("bf");if(f)f.style.width=(rem()/S.T*100)+"%";
 }
 setInterval(()=>{if(S&&S.phase==="q"){const f=document.getElementById("bf");if(f)f.style.width=(rem()/S.T*100)+"%"}},250);
+if(host&&!pass)gate();else openES();
 </script></body></html>
