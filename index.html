@@ -30,7 +30,7 @@ button,input{font:inherit}input{width:100%;padding:14px;border-radius:14px;borde
 const ESP=["Lomé","Bamako","Ségou"],L="ABCD";
 const e=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let S=null,off=0,id,esp=null,nmv="",pass="",msg="",rs=false,picked=null,key="";
-const host=location.hash==="#animateur";
+const host=location.hash==="#animateur";addEventListener("hashchange",()=>location.reload());
 try{id=localStorage.getItem("qid")}catch(x){}
 if(!id){id=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem("qid",id)}catch(x){}}
 const HOSTID="kabakoo-quiz-purpose-vision-host",PH="a9b5bc3c866addff57adba006ebcd581b7fa2c0b4a294e2e8d6a850e83a0bc1b",T=20;
