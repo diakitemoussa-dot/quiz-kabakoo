@@ -67,6 +67,8 @@ async function hapi(p,b,local){
     return{ok:1}}
   return{err:"404"};
 }
+const ICE={config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:global.stun.twilio.com:3478"},
+ {urls:["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443","turn:openrelay.metered.ca:443?transport=tcp"],username:"openrelayproject",credential:"openrelayproject"}]}};
 const pend={};let peer,conn;
 const api=(p,b)=>host?hapi(p,{id,...b},true):new Promise(res=>{
   if(!conn||!conn.open)return res({err:"réseau"});
@@ -76,7 +78,7 @@ const api=(p,b)=>host?hapi(p,{id,...b},true):new Promise(res=>{
 async function startHost(){
   try{Q=await (await fetch("questions.json")).json()}catch(x){return wait("Impossible de charger les questions.")}
   try{const sv=JSON.parse(localStorage.getItem("qhost"));if(sv&&sv.st){st=sv.st;teams=sv.teams||{}}}catch(x){}
-  peer=new Peer(HOSTID);
+  peer=new Peer(HOSTID,ICE);
   peer.on("open",()=>{push();if(st.phase==="q"){const t0=st.t0;setTimeout(()=>{if(st.phase==="q"&&st.t0===t0)reveal()},Math.max(0,T*1000+400-(Date.now()-t0)))}});
   peer.on("connection",c=>{conns.add(c);
     c.on("open",()=>c.send(view()));
@@ -93,7 +95,8 @@ function dial(){
 }
 function startGuest(){
   wait("Connexion à l’animateur…");
-  peer=new Peer();
+  peer=new Peer(ICE);
+  setTimeout(()=>{if(!S)wait("Connexion impossible pour l’instant. Vérifiez votre internet, que l’animateur a bien ouvert sa page, puis rechargez. Si ça persiste, essayez un autre réseau (Wi-Fi ou 4G).")},20000);
   peer.on("open",dial);
   peer.on("disconnected",()=>peer.reconnect());
   peer.on("error",er=>{if(er.type==="peer-unavailable"){wait("En attente de l’animateur… la page se connectera toute seule.");tag("En attente…");setTimeout(dial,3000)}else{tag("Reconnexion…");setTimeout(()=>{if(peer.destroyed)startGuest();else if(!conn||!conn.open)dial()},3000)}});
